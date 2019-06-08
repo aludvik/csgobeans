@@ -101,10 +101,8 @@ class Database:
     # Inventory Accesors
     def inventory_from_user_id(self, user_id, start=-1, count=-1):
         return self.db.execute(
-            'SELECT * FROM inventory WHERE user_id = ?'
-            ' ORDER BY inventory_id'
-            ' LIMIT ? OFFSET ?',
-            (user_id, count, offset)
+            'SELECT * FROM inventory WHERE user_id = ? LIMIT ? OFFSET ?',
+            (user_id, count, start)
         ).fetchall()
 
     def bean_id_qty_for_user_id(self, user_id, bean_id):

@@ -76,6 +76,16 @@ class TestDatabase(unittest.TestCase):
         navy_id = self.db.bean_id_from_name("navy")
         self.db.init_bean_id_qty_for_user_id(user_id, navy_id, 2000)
 
+    def test_inventory_paging(self):
+        self.db.register_user(TEST_USER["user"], TEST_USER["password"])
+        user_id = self.db.user_id_from_username(TEST_USER["user"])
+        for i in range(1, 101):
+            bean = Bean(str(i), "bean " + str(i), Color.RED, Quality.RARE)
+            self.db.create_bean(bean)
+        beans = self.db.inventory_from_user_id(user_id, start=10, count=5)
+        for i, bean in enumerate(beans):
+            self.assertEqual(i + start, int(beans[i].name))
+
     def test_trades(self):
         self.db.register_user(TEST_USER["user"], TEST_USER["password"])
         self.db.log_trade(TEST_USER["user"], TEST_ITEM)
