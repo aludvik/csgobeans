@@ -3,11 +3,6 @@ import sqlite3
 
 from . import beans
 
-# - Trades
-# Log trades and timestamps
-# Lookup whether an item has been traded previously by a given user
-# Page through a user's trades
-
 SCHEMA_FILE_PATH = os.path.join(os.path.dirname(__file__), "schema.sql")
 
 
@@ -136,6 +131,35 @@ class Database:
             'UPDATE inventory SET qty = ? WHERE user_id = ? AND bean_id = ?',
             (qty, user_id, bean_id))
         self.db.commit()
+
+    # - Trades
+    # Log trades and timestamps
+    # Lookup whether an item has been traded previously by a given user
+    # Page through a user's trades
+
+    # Trade Accessors
+    def already_traded(self, user_id, item):
+        traded = self.db.execute(
+            'SELECT trade_id FROM trades WHERE user_id = ? AND item = ?',
+            (user_id, item)
+        ).fetchone()
+        return traded is not None
+
+    def trades_from_user_id(self, user_id, start=-1, count=-1):
+        return self.db.execute(
+            'SELECT * FROM trades WHERE user_id = ?'
+            ' ORDER BY trade_timestamp'
+            ' LIMIT ? OFFSET ?',
+            (user_id, count, start)
+        ).fetchall()
+
+    # Trade Mutators
+    def log_trade(self, user_id, item):
+        self.db.execute(
+            'INSERT INTO trades (user_id, item) VALUES (?, ?)',
+            (user_id, item))
+        self.db.commit()
+
 
 def _unwrap_single_if_not_none(single):
     if single is not None:

@@ -9,6 +9,7 @@ from csgobeans.beans import Bean, Color, Quality
 
 TEST_USER = {"user": "test", "password": "hash"}
 TEST_BEAN = Bean("test", "A testy bean", Color.GREY, Quality.COMMON)
+TEST_ITEM = "testitem"
 
 class TestDatabase(unittest.TestCase):
     def setUp(self):
@@ -74,3 +75,18 @@ class TestDatabase(unittest.TestCase):
         self.db.create_bean(navy)
         navy_id = self.db.bean_id_from_name("navy")
         self.db.init_bean_id_qty_for_user_id(user_id, navy_id, 2000)
+
+    def test_trades(self):
+        self.db.register_user(TEST_USER["user"], TEST_USER["password"])
+        self.db.log_trade(TEST_USER["user"], TEST_ITEM)
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.db.log_trade(TEST_USER["user"], TEST_ITEM)
+
+        trades = self.db.trades_from_user_id(TEST_USER["user"])
+        self.assertEqual(1, len(trades))
+        trade_id, user_id, item, timestamp = trades[0]
+        self.assertEqual(user_id, TEST_USER["user"])
+        self.assertEqual(item, TEST_ITEM)
+
+        self.assertTrue(self.db.already_traded(user_id, TEST_ITEM))
+        self.assertFalse(self.db.already_traded(user_id, "notanitem"))
