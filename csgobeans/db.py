@@ -11,11 +11,6 @@ from . import beans
 SCHEMA_FILE_PATH = os.path.join(os.path.dirname(__file__), "schema.sql")
 
 class Database:
-    @staticmethod
-    def connect_to_database(database_file_path):
-        return sqlite3.connect(
-            database_file_path,
-            detect_types=sqlite3.PARSE_DECLTYPES)
 
     def initialize_from_schema(
         self,
@@ -26,7 +21,9 @@ class Database:
             self.db.executescript(schema)
 
     def __init__(self, database_file_path):
-        self.db = self.connect_to_database(database_file_path)
+        self.db = sqlite3.connect(
+            database_file_path,
+            detect_types=sqlite3.PARSE_DECLTYPES)
 
     def close(self):
         self.db.close()
