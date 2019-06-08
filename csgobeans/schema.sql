@@ -1,0 +1,35 @@
+DROP TABLE IF EXISTS auth;
+DROP TABLE IF EXISTS beans;
+DROP TABLE IF EXISTS inventory;
+DROP TABLE IF EXISTS trades;
+
+CREATE TABLE auth (
+  user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL
+);
+
+CREATE TABLE beans (
+  bean_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT UNIQUE NOT NULL,
+  short_desc TEXT NOT NULL,
+  color INTEGER NOT NULL,
+  quality INTEGER NOT NULL
+);
+
+CREATE TABLE inventory (
+  user_id INTEGER NOT NULL,
+  bean_id INTEGER NOT NULL,
+  qty INTEGER,
+  FOREIGN KEY (user_id) REFERENCES auth (user_id),
+  FOREIGN KEY (bean_id) REFERENCES beans (user_id)
+  PRIMARY KEY (user_id, bean_id)
+);
+
+CREATE TABLE trades (
+  trade_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  item TEXT UNIQUE NOT NULL,
+  traded TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES auth (user_id)
+);
