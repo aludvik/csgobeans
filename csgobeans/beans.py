@@ -37,10 +37,3 @@ class Bean:
             self.short_desc == other.short_desc,
             self.color == other.color,
             self.quality == other.quality))
-
-    @staticmethod
-    def from_tuple_or_none(t):
-        if t is None:
-            return None
-
-        return Bean(t[1], t[2], Color(t[3]), Quality(t[4]))

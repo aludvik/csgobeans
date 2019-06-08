@@ -10,8 +10,23 @@ from . import beans
 
 SCHEMA_FILE_PATH = os.path.join(os.path.dirname(__file__), "schema.sql")
 
-class Database:
 
+def _bean_to_tuple(bean):
+    return (bean.name, bean.short_desc, bean.color.value, bean.quality.value)
+
+
+def _tuple_to_bean_or_none(tuple):
+    if tuple is None:
+        return None
+
+    return beans.Bean(
+        tuple[1],
+        tuple[2],
+        beans.Color(tuple[3]),
+        beans.Quality(tuple[4]))
+
+
+class Database:
     def initialize_from_schema(
         self,
         schema_file_path=SCHEMA_FILE_PATH
@@ -61,12 +76,12 @@ class Database:
 
     # Beans Accessors
     def bean_from_name(self, bean_name):
-        return beans.Bean.from_tuple_or_none(self.db.execute(
+        return _tuple_to_bean_or_none(self.db.execute(
             'SELECT * FROM beans WHERE name = ?', (bean_name,)
         ).fetchone())
 
     def bean_from_bean_id(self, bean_id):
-        return beans.Bean.from_tuple_or_none(self.db.execute(
+        return _tuple_to_bean_or_none(self.db.execute(
             'SELECT * FROM beans WHERE bean_id = ?', (bean_id,)
         ).fetchone())
 
@@ -80,7 +95,7 @@ class Database:
         self.db.execute(
             'INSERT INTO beans (name, short_desc, color, quality)'
             ' VALUES (?, ?, ?, ?)',
-            (bean.name, bean.short_desc, bean.color.value, bean.quality.value))
+            _bean_to_tuple(bean))
         self.db.commit()
 
     # - Inventory
