@@ -127,6 +127,10 @@ class Database:
 
     def inc_bean_id_qty_for_user_id(self, user_id, bean_id, inc_qty):
         qty = self.bean_id_qty_for_user_id(user_id, bean_id)
+        if qty is None:
+            self.init_bean_id_qty_for_user_id(user_id, bean_id, inc_qty)
+            return
+
         qty += inc_qty
         self.db.execute(
             'UPDATE inventory SET qty = ? WHERE user_id = ? AND bean_id = ?',
