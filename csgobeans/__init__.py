@@ -65,7 +65,7 @@ def create_app(test_config=None):
 
     @app.route("/")
     def index():
-        return flask.redirect(flask.url_for("inventory"))
+        return render_template_with_context("index.html")
 
     @app.route("/register", methods=('GET', 'POST'))
     def register():
