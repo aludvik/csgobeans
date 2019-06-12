@@ -114,7 +114,7 @@ def create_app(test_config=None):
 
     @app.route("/inventory")
     def inventory():
-        return flask.render_template("inventory.html")
+        return render_template_with_context("inventory.html")
 
     return app
 
