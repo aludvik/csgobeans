@@ -67,7 +67,7 @@ def create_app(test_config=None):
     def index():
         return render_template_with_context("index.html")
 
-    @app.route("/register", methods=('GET', 'POST'))
+    @app.route("/register", methods=['GET', 'POST'])
     def register():
         if flask.request.method == 'POST':
             username = flask.request.form['username']
