@@ -20,9 +20,9 @@ def create_app(test_config=None):
 
     app.register_blueprint(auth.create_blueprint())
 
-    @app.route("/inventory")
+    @app.route("/beans")
     def inventory():
-        return ctx.render_template_with_context("inventory.html")
+        return ctx.render_template_with_context("beans.html")
 
     return app
 
