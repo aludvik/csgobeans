@@ -95,6 +95,9 @@ class Database:
             'SELECT bean_id FROM beans WHERE name = ?', (bean_name,)
         ).fetchone())
 
+    def list_beans(self):
+        return self.db.execute('SELECT bean_id, name FROM beans').fetchall()
+
     # Beans Mutators
     def create_bean(self, bean):
         self.db.execute(

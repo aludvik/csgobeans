@@ -55,6 +55,10 @@ class TestDatabase(unittest.TestCase):
         test3 = self.db.bean_from_bean_id(test_id)
         self.assertEqual(TEST_BEAN, test3)
 
+        beans = self.db.list_beans()
+        self.assertEqual(1, len(beans))
+        self.assertEqual((test_id, TEST_BEAN.name), beans[0])
+
     def test_inventory(self):
         self.db.register_user(TEST_USER["user"], TEST_USER["password"])
         user_id = self.db.user_id_from_username(TEST_USER["user"])
