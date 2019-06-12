@@ -6,6 +6,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from . import db
 from . import ctx
 from . import auth
+from . import inventory
 
 
 def create_app(test_config=None):
@@ -19,10 +20,7 @@ def create_app(test_config=None):
         return ctx.render_template_with_context("index.html")
 
     app.register_blueprint(auth.create_blueprint())
-
-    @app.route("/beans")
-    def inventory():
-        return ctx.render_template_with_context("beans.html")
+    app.register_blueprint(inventory.create_blueprint())
 
     return app
 
