@@ -7,15 +7,6 @@ from . import db
 from . import ctx
 
 
-def render_template_with_context(template):
-    user = ctx.get_user()
-    if user is None:
-        return flask.render_template(template)
-    return flask.render_template(
-        template,
-        username=user['username'])
-
-
 def create_app(test_config=None):
     app = flask.Flask(__name__, instance_relative_config=True)
 
@@ -24,7 +15,7 @@ def create_app(test_config=None):
 
     @app.route("/")
     def index():
-        return render_template_with_context("index.html")
+        return ctx.render_template_with_context("index.html")
 
     @app.route("/register", methods=['GET', 'POST'])
     @get_template_or_post_with_err('register.html')
@@ -73,7 +64,7 @@ def create_app(test_config=None):
 
     @app.route("/inventory")
     def inventory():
-        return render_template_with_context("inventory.html")
+        return ctx.render_template_with_context("inventory.html")
 
     return app
 

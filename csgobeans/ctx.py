@@ -1,8 +1,17 @@
 import os
 
-from flask import current_app, g, session
+from flask import current_app, g, session, render_template
 
 from .db import Database
+
+
+def render_template_with_context(template):
+    user = get_user()
+    if user is None:
+        return render_template(template)
+    return render_template(
+        template,
+        username=user['username'])
 
 
 def app_local_path(app, path):
