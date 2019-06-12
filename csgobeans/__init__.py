@@ -87,6 +87,30 @@ def create_app(test_config=None):
         app.logger.info("Registered new user '%s'", form['username'])
         return flask.redirect(flask.url_for('index'))
 
+    @app.route("/login", methods=['POST'])
+    @redirect_on_err('inventory')
+    def login():
+        form = flask.request.form
+        db = ctx.get_db()
+
+        user = db.user_from_username(form['username'])
+        if user is None:
+            raise FlashError('Incorrect username')
+        elif not check_password_hash(user['password'], form['password']):
+            raise FlashError('Incorrect password')
+
+        ctx.clear_session()
+        ctx.set_user_id(user['user_id'])
+
+        app.logger.debug("User logged in '%s'", user['username'])
+
+        return flask.redirect(flask.url_for('index'))
+
+    @app.route("/logout", methods=['POST'])
+    @redirect_on_err('index')
+    def logout():
+        flask.session.clear()
+        return flask.redirect(flask.url_for('index'))
 
     @app.route("/inventory")
     def inventory():
