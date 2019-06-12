@@ -68,28 +68,25 @@ def create_app(test_config=None):
         return render_template_with_context("index.html")
 
     @app.route("/register", methods=['GET', 'POST'])
+    @get_template_or_post_with_err('register.html')
     def register():
-        if flask.request.method == 'POST':
-            username = flask.request.form['username']
-            password = flask.request.form['password']
-            db = ctx.get_db()
-            error = None
+        form = flask.request.form
+        db = ctx.get_db()
 
-            if not username:
-                error = 'Username is required'
-            elif not password:
-                error = 'Password is required'
-            elif db.user_id_from_username(username) is not None:
-                error = 'User {} is already registered.'.format(username)
+        if not form['username']:
+            raise FlashError('Username is required')
+        elif not form['password']:
+            raise FlashError('Password is required')
+        elif db.user_id_from_username(form['username']) is not None:
+            raise FlashError(
+                'User {} is already registered.'.format(form['username']))
 
-            if error is None:
-                db.register_user(username, generate_password_hash(password))
-                app.logger.info("Registered new user '%s'", username)
-                return flask.redirect(flask.url_for('inventory'))
+        db.register_user(
+            form['username'],
+            generate_password_hash(form['password']))
+        app.logger.info("Registered new user '%s'", form['username'])
+        return flask.redirect(flask.url_for('index'))
 
-            flask.flash(error)
-
-        return flask.render_template('register.html')
 
     @app.route("/inventory")
     def inventory():
