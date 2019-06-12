@@ -28,22 +28,22 @@ class TestDatabase(unittest.TestCase):
 
     def test_user_registration(self):
         self.db.register_user("abc", "def")
-        user_id, username, hash = self.db.user_from_username("abc")
-        self.assertEqual("abc", username)
-        self.assertEqual("def", hash)
+        user = self.db.user_from_username("abc")
+        self.assertEqual("abc", user['username'])
+        self.assertEqual("def", user['password'])
         with self.assertRaises(sqlite3.IntegrityError):
             self.db.register_user("abc", "ghi")
 
         self.assertEqual(None, self.db.user_from_username("jkl"))
         self.assertEqual(None, self.db.user_id_from_username("jkl"))
 
-        user_id2, username2, hash2 = self.db.user_from_user_id(user_id)
-        self.assertEqual(user_id, user_id2)
-        self.assertEqual("abc", username2)
-        self.assertEqual("def", hash2)
+        user2 = self.db.user_from_user_id(user['user_id'])
+        self.assertEqual(user['user_id'], user2['user_id'])
+        self.assertEqual("abc", user2['username'])
+        self.assertEqual("def", user2['password'])
 
         user_id3 = self.db.user_id_from_username("abc")
-        self.assertEqual(user_id, user_id3)
+        self.assertEqual(user['user_id'], user_id3)
 
     def test_beans(self):
         self.db.create_bean(TEST_BEAN)
