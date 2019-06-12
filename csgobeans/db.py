@@ -20,6 +20,16 @@ def _tuple_to_bean_or_none(tuple):
         beans.Color(tuple[3]),
         beans.Quality(tuple[4]))
 
+def _user_tuple_to_dict_or_none(tuple):
+    if tuple is None:
+        return None
+
+    return {
+        'user_id': tuple[0],
+        'username': tuple[1],
+        'password': tuple[2]
+    }
+
 
 class Database:
     def initialize_from_schema(
@@ -44,14 +54,14 @@ class Database:
 
     # Auth Accessors
     def user_from_user_id(self, user_id):
-        return self.db.execute(
+        return _user_tuple_to_dict_or_none(self.db.execute(
             'SELECT * FROM auth WHERE user_id = ?', (user_id,)
-        ).fetchone()
+        ).fetchone())
 
     def user_from_username(self, username):
-        return self.db.execute(
+        return _user_tuple_to_dict_or_none(self.db.execute(
             'SELECT * FROM auth WHERE username = ?', (username,)
-        ).fetchone()
+        ).fetchone())
 
     def user_id_from_username(self, username):
         return _unwrap_single_if_not_none(self.db.execute(
