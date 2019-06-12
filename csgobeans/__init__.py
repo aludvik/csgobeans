@@ -25,6 +25,15 @@ def redirect_on_err(redirect):
     return wrapper
 
 
+def login_required(f):
+    def decorator(*args, **kwargs):
+        if ctx.get_user_id() is None:
+            return redirect(url_for('login', next=request.url))
+        return f(*args, **kwargs)
+    decorator.__name__ = f.__name__
+    return decorator
+
+
 def get_template_or_post_with_err(template):
     def wrapper(f):
         def decorator():
