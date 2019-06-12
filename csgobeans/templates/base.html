@@ -3,6 +3,21 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <nav>
   <h1>CSGO Beans</h1>
+  <h2>Login</h2>
+  {% if username %}
+    <h2>Hello! {{ username }}</h2>
+    <form method="post" action="/logout">
+      <input type="submit" value="Logout">
+    </form>
+  {% else %}
+    <form method="post" action="/login">
+      <label for="username">Username</label>
+      <input name="username" id="username" required>
+      <label for="password">Password</label>
+      <input type="password" name="password" id="password" required>
+      <input type="submit" value="Login">
+    </form>
+  {% endif %}
 </nav>
 <section>
   <header><h1>{% block header %}{% endblock %}</h1></header>
