@@ -7,6 +7,38 @@ from . import db
 from . import ctx
 
 
+class FlashError(BaseException):
+    def __init__(self, msg):
+        self.msg = msg
+
+
+def redirect_on_err(redirect):
+    def wrapper(f):
+        def decorator():
+            try:
+                return f()
+            except FlashError as error:
+                flask.flash(error.msg)
+                return flask.redirect(url_for(redirect))
+        decorator.__name__ = f.__name__
+        return decorator
+    return wrapper
+
+
+def get_template_or_post_with_err(template):
+    def wrapper(f):
+        def decorator():
+            if flask.request.method == 'POST':
+                try:
+                    return f()
+                except FlashError as error:
+                    flask.flash(error.msg)
+            return render_template_with_context(template)
+        decorator.__name__ = f.__name__
+        return decorator
+    return wrapper
+
+
 def create_app(test_config=None):
     app = flask.Flask(__name__, instance_relative_config=True)
 
