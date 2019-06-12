@@ -14,6 +14,10 @@ def render_template_with_context(template):
         username=user['username'])
 
 
+def logger():
+    return current_app.logger
+
+
 def app_local_path(app, path):
     return os.path.join(app.instance_path, path)
 
