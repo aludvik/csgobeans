@@ -48,6 +48,15 @@ def get_template_or_post_with_err(template):
     return wrapper
 
 
+def render_template_with_context(template):
+    user = ctx.get_user()
+    if user is None:
+        return flask.render_template(template)
+    return flask.render_template(
+        template,
+        username=user['username'])
+
+
 def create_app(test_config=None):
     app = flask.Flask(__name__, instance_relative_config=True)
 
