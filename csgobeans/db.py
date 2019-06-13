@@ -4,6 +4,7 @@ import sqlite3
 from . import beans
 
 SCHEMA_FILE_PATH = os.path.join(os.path.dirname(__file__), "schema.sql")
+BEANS_FILE_PATH = os.path.join(os.path.dirname(__file__), "beans")
 
 
 def _bean_to_tuple(bean):
@@ -39,6 +40,21 @@ class Database:
         with open(schema_file_path, encoding='utf-8') as schema_file:
             schema = schema_file.read()
             self.db.executescript(schema)
+
+    def populate_beans_from_file(
+        self,
+        beans_file_path=BEANS_FILE_PATH
+    ):
+        with open(beans_file_path, encoding='utf-8') as beans_file:
+            for line in beans_file.readlines():
+                split_line = line.split(';')
+                assert len(split_line) == 4
+                bean = beans.Bean(
+                    split_line[0],
+                    split_line[1],
+                    int(split_line[2]),
+                    int(split_line[3]))
+                self.create_bean(bean)
 
     def __init__(self, database_file_path):
         self.db = sqlite3.connect(
