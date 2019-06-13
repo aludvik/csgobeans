@@ -6,12 +6,10 @@ from .db import Database
 
 
 def render_template_with_context(template, **kwargs):
-    user = get_user()
-    if user is None:
-        return render_template(template)
+    username = get_username()
     return render_template(
         template,
-        username=user['username'],
+        username=username,
         **kwargs)
 
 
@@ -53,16 +51,16 @@ def get_user_id():
     return session['user_id']
 
 
-def get_user():
+def get_username():
     user_id = get_user_id()
     if user_id is None:
         return None
 
-    if 'user' not in g:
+    if 'username' not in g:
         db = get_db()
-        g.user = db.user_from_user_id(user_id)
+        g.username = db.username_from_user_id(user_id)
 
-    return g.user
+    return g.username
 
 
 def register_teardowns(app):

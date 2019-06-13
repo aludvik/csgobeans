@@ -1,6 +1,8 @@
 import os
 import sqlite3
 
+from werkzeug.security import check_password_hash, generate_password_hash
+
 from . import beans
 
 SCHEMA_FILE_PATH = os.path.join(os.path.dirname(__file__), "schema.sql")
@@ -69,25 +71,32 @@ class Database:
     # Register a new user
 
     # Auth Accessors
-    def user_from_user_id(self, user_id):
-        return _user_tuple_to_dict_or_none(self.db.execute(
-            'SELECT * FROM auth WHERE user_id = ?', (user_id,)
-        ).fetchone())
-
-    def user_from_username(self, username):
-        return _user_tuple_to_dict_or_none(self.db.execute(
-            'SELECT * FROM auth WHERE username = ?', (username,)
-        ).fetchone())
-
-    def user_id_from_username(self, username):
+    def username_from_user_id(self, user_id):
         return _unwrap_single_if_not_none(self.db.execute(
-            'SELECT user_id FROM auth WHERE username = ?', (username,)
+            'SELECT username FROM auth WHERE user_id = ?',
+            (user_id,)
         ).fetchone())
+
+    def check_username_and_password(self, username, password):
+        user_id_and_password_hash = self.db.execute(
+            'SELECT user_id, password_hash FROM auth WHERE username = ?',
+            (username,)
+        ).fetchone()
+
+        if user_id_and_password_hash is None:
+            return None
+
+        user_id, password_hash = user_id_and_password_hash
+        if not check_password_hash(password_hash, password):
+            return None
+
+        return user_id
 
     # Auth Mutators
-    def register_user(self, username, password_hash):
+    def register_user(self, username, password):
+        password_hash = generate_password_hash(password)
         self.db.execute(
-            'INSERT INTO auth (username, password) VALUES (?, ?)',
+            'INSERT INTO auth (username, password_hash) VALUES (?, ?)',
             (username, password_hash))
         self.db.commit()
 

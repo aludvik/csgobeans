@@ -1,5 +1,4 @@
 import flask
-from werkzeug.security import check_password_hash, generate_password_hash
 
 from . import ctx
 from . import db
@@ -21,13 +20,13 @@ def create_blueprint():
             raise FlashError('Username is required')
         elif not form['password']:
             raise FlashError('Password is required')
-        elif db.user_id_from_username(form['username']) is not None:
+        elif db.check_username_and_password(
+            form['username'], form['password']
+        ) is not None:
             raise FlashError(
                 'User {} is already registered.'.format(form['username']))
 
-        db.register_user(
-            form['username'],
-            generate_password_hash(form['password']))
+        db.register_user(form['username'], form['password'])
         ctx.logger().info("Registered new user '%s'", form['username'])
         return flask.redirect(flask.url_for('index'))
 
@@ -37,16 +36,17 @@ def create_blueprint():
         form = flask.request.form
         db = ctx.get_db()
 
-        user = db.user_from_username(form['username'])
-        if user is None:
-            raise FlashError('Incorrect username')
-        elif not check_password_hash(user['password'], form['password']):
-            raise FlashError('Incorrect password')
+        user_id = db.check_username_and_password(
+            form['username'],
+            form['password'])
+
+        if user_id is None:
+            raise FlashError('Incorrect username or password')
 
         ctx.clear_session()
-        ctx.set_user_id(user['user_id'])
+        ctx.set_user_id(user_id)
 
-        ctx.logger().debug("User logged in '%s'", user['username'])
+        ctx.logger().debug("User logged in '%s'", form['username'])
 
         return flask.redirect(flask.url_for('index'))
 

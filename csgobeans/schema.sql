@@ -6,7 +6,7 @@ DROP TABLE IF EXISTS trades;
 CREATE TABLE auth (
   user_id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL
+  password_hash TEXT NOT NULL
 );
 
 CREATE TABLE beans (

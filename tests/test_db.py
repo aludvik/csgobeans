@@ -28,22 +28,19 @@ class TestDatabase(unittest.TestCase):
 
     def test_user_registration(self):
         self.db.register_user("abc", "def")
-        user = self.db.user_from_username("abc")
-        self.assertEqual("abc", user['username'])
-        self.assertEqual("def", user['password'])
+        user_id = self.db.check_username_and_password("abc", "def")
+        self.assertIsNot(user_id, None)
+        username = self.db.username_from_user_id(user_id)
+        self.assertEqual("abc", username)
+
+        self.assertIs(None, self.db.check_username_and_password("abc", "ghi"))
+
         with self.assertRaises(sqlite3.IntegrityError):
             self.db.register_user("abc", "ghi")
 
-        self.assertEqual(None, self.db.user_from_username("jkl"))
-        self.assertEqual(None, self.db.user_id_from_username("jkl"))
-
-        user2 = self.db.user_from_user_id(user['user_id'])
-        self.assertEqual(user['user_id'], user2['user_id'])
-        self.assertEqual("abc", user2['username'])
-        self.assertEqual("def", user2['password'])
-
-        user_id3 = self.db.user_id_from_username("abc")
-        self.assertEqual(user['user_id'], user_id3)
+        self.assertEqual(
+            None,
+            self.db.check_username_and_password("jkl", "mno"))
 
     def test_beans(self):
         self.db.create_bean(TEST_BEAN)
@@ -61,7 +58,8 @@ class TestDatabase(unittest.TestCase):
 
     def test_inventory(self):
         self.db.register_user(TEST_USER["user"], TEST_USER["password"])
-        user_id = self.db.user_id_from_username(TEST_USER["user"])
+        user_id = self.db.check_username_and_password(
+            TEST_USER["user"], TEST_USER["password"])
         self.db.create_bean(TEST_BEAN)
         bean_id = self.db.bean_id_from_name(TEST_BEAN.name)
 
@@ -82,7 +80,8 @@ class TestDatabase(unittest.TestCase):
 
     def test_inventory_paging(self):
         self.db.register_user(TEST_USER["user"], TEST_USER["password"])
-        user_id = self.db.user_id_from_username(TEST_USER["user"])
+        user_id = self.db.check_username_and_password(
+            TEST_USER["user"], TEST_USER["password"])
         for i in range(1, 101):
             bean = Bean(str(i), "bean " + str(i), Color.RED, Quality.RARE)
             self.db.create_bean(bean)
