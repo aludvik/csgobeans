@@ -66,6 +66,13 @@ class Database:
     def close(self):
         self.db.close()
 
+    def closed(self):
+        try:
+            self.db.cursor()
+        except sqlite3.ProgrammingError:
+            return True
+        return False
+
     # - Auth
     # Look up information about a user from the id or username
     # Register a new user

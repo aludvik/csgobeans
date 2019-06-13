@@ -7,10 +7,10 @@ from . import auth
 from . import inventory
 
 
-def create_app(test_config=None):
+def create_app(config=None):
     app = flask.Flask(__name__, instance_relative_config=True)
 
-    configure(app)
+    configure(app, config)
     setup(app)
 
     @app.route("/")
@@ -23,11 +23,14 @@ def create_app(test_config=None):
     return app
 
 
-def configure(app):
+def configure(app, config):
     app.config.from_mapping(
         SECRET_KEY='dev',
         DATABASE_FILE='csgobeans.sqlite',
     )
+
+    if config is not None:
+        app.config.from_mapping(config)
 
 def setup(app):
     cli.init_cli(app)
