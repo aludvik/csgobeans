@@ -15,17 +15,18 @@ def redirect_on_err(redirect):
                 return f()
             except FlashError as error:
                 flask.flash(error.msg)
-                return flask.redirect(url_for(redirect))
+                return flask.redirect(flask.url_for(redirect))
         decorator.__name__ = f.__name__
         return decorator
     return wrapper
 
 
 def login_required(f):
-    def decorator(*args, **kwargs):
+    def decorator():
         if ctx.get_user_id() is None:
-            return redirect(url_for('login', next=request.url))
-        return f(*args, **kwargs)
+            flask.flash("Login required")
+            return flask.redirect(flask.url_for('index'))
+        return f()
     decorator.__name__ = f.__name__
     return decorator
 
@@ -38,7 +39,7 @@ def get_template_or_post_with_err(template):
                     return f()
                 except FlashError as error:
                     flask.flash(error.msg)
-            return render_template_with_context(template)
+            return ctx.render_template_with_context(template)
         decorator.__name__ = f.__name__
         return decorator
     return wrapper
