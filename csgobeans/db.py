@@ -107,7 +107,7 @@ class Database:
     # Beans Accessors
     def bean_from_name(self, bean_name):
         return _tuple_to_bean_or_none(self.db.execute(
-            'SELECT * FROM beans WHERE name = ?', (bean_name,)
+            'SELECT * FROM beans WHERE bean_name = ?', (bean_name,)
         ).fetchone())
 
     def bean_from_bean_id(self, bean_id):
@@ -117,16 +117,18 @@ class Database:
 
     def bean_id_from_name(self, bean_name):
         return _unwrap_single_if_not_none(self.db.execute(
-            'SELECT bean_id FROM beans WHERE name = ?', (bean_name,)
+            'SELECT bean_id FROM beans WHERE bean_name = ?', (bean_name,)
         ).fetchone())
 
     def list_beans(self):
-        return self.db.execute('SELECT bean_id, name FROM beans').fetchall()
+        return self.db.execute(
+            'SELECT bean_id, bean_name FROM beans ORDER BY bean_name'
+        ).fetchall()
 
     # Beans Mutators
     def create_bean(self, bean):
         self.db.execute(
-            'INSERT INTO beans (name, short_desc, color, quality)'
+            'INSERT INTO beans (bean_name, short_desc, color, quality)'
             ' VALUES (?, ?, ?, ?)',
             _bean_to_tuple(bean))
         self.db.commit()
