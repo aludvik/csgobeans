@@ -1,9 +1,7 @@
-import os
-
 import flask
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from . import db
+from . import cli
 from . import ctx
 from . import auth
 from . import inventory
@@ -31,10 +29,6 @@ def configure(app):
         DATABASE_FILE='csgobeans.sqlite',
     )
 
-
 def setup(app):
-    os.makedirs(app.instance_path, exist_ok=True)
-    if not os.path.isfile(ctx.database_local_path(app)):
-        db.Database(ctx.database_local_path(app)).initialize_from_schema()
-        # TODO: Populate with beans
+    cli.init_cli(app)
     ctx.register_teardowns(app)
