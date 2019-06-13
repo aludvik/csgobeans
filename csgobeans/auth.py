@@ -5,6 +5,7 @@ from . import ctx
 from . import db
 from .decorators import get_template_or_post_with_err
 from .decorators import redirect_on_err
+from .decorators import FlashError
 
 
 def create_blueprint():
@@ -17,11 +18,11 @@ def create_blueprint():
         db = ctx.get_db()
 
         if not form['username']:
-            raise ctx.FlashError('Username is required')
+            raise FlashError('Username is required')
         elif not form['password']:
-            raise ctx.FlashError('Password is required')
+            raise FlashError('Password is required')
         elif db.user_id_from_username(form['username']) is not None:
-            raise ctx.FlashError(
+            raise FlashError(
                 'User {} is already registered.'.format(form['username']))
 
         db.register_user(
@@ -38,9 +39,9 @@ def create_blueprint():
 
         user = db.user_from_username(form['username'])
         if user is None:
-            raise ctx.FlashError('Incorrect username')
+            raise FlashError('Incorrect username')
         elif not check_password_hash(user['password'], form['password']):
-            raise ctx.FlashError('Incorrect password')
+            raise FlashError('Incorrect password')
 
         ctx.clear_session()
         ctx.set_user_id(user['user_id'])
