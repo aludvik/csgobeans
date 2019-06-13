@@ -5,13 +5,14 @@ from flask import current_app, g, session, render_template
 from .db import Database
 
 
-def render_template_with_context(template):
+def render_template_with_context(template, **kwargs):
     user = get_user()
     if user is None:
         return render_template(template)
     return render_template(
         template,
-        username=user['username'])
+        username=user['username'],
+        **kwargs)
 
 
 def logger():
