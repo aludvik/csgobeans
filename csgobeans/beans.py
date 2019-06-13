@@ -19,6 +19,10 @@ class Color(enum.Enum):
 
 class Bean:
     def __init__(self, name, short_desc, color, quality):
+        if not isinstance(color , Color):
+            color = Color(color)
+        if not isinstance(quality , Quality):
+            quality = Quality(quality)
         self.name = name
         self.short_desc = short_desc
         self.color = color
