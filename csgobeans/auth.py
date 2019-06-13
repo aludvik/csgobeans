@@ -46,6 +46,7 @@ def create_blueprint():
         ctx.clear_session()
         ctx.set_user_id(user_id)
 
+        flask.flash("Logged in as %s" % form['username'])
         ctx.logger().debug("User logged in '%s'", form['username'])
 
         return flask.redirect(flask.url_for('index'))
@@ -54,6 +55,7 @@ def create_blueprint():
     @redirect_on_err('index')
     def logout():
         flask.session.clear()
+        flask.flash("Logged out")
         return flask.redirect(flask.url_for('index'))
 
     return bp
