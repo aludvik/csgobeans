@@ -31,7 +31,7 @@ def create_blueprint():
         return flask.redirect(flask.url_for('index'))
 
     @bp.route("/login", methods=['POST'])
-    @redirect_on_err('beans')
+    @redirect_on_err('index')
     def login():
         form = flask.request.form
         db = ctx.get_db()
