@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Trade{% endblock %}
+{% block header %}Trade{% endblock %}
+
+{% block content %}
+  <table>
+
+  <form method="post" action="/trade">
+    <table>
+      <tr>
+        <td><label for="item">Item</label></td>
+        <td><input name="item" required></td>
+      </tr>
+      <tr>
+        <td><label for="bean_id">Bean ID</label></td>
+        <td><input name="bean_id" required></td>
+      </tr>
+      <tr>
+        <td><label for="qty">Quantity</label></td>
+        <td><input name="qty" required></td>
+      </tr>
+    </table>
+    <input type="submit" value="Trade">
+  </form>
+{% endblock %}

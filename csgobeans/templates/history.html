@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}History{% endblock %}
+{% block header %}History{% endblock %}
+
+{% block content %}
+<table>
+  <tr>
+      <th>Item</th>
+      <th>Time</th>
+  </tr>
+  {% for trade in trades %}
+  <tr>
+    <td>{{ trade[1] }}</td>
+    <td>{{ trade[2] }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

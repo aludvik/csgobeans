@@ -2,3 +2,11 @@
 
 {% block title %}Inventory{% endblock %}
 {% block header %}Inventory{% endblock %}
+
+{% block content %}
+  <ul>
+  {% for bean in beans %}
+    <li>{{ bean[2] }}, Qty: {{ bean[1] }}</li>
+  {% endfor %}
+  </ul>
+{% endblock %}

@@ -26,6 +26,24 @@ class AppTest(unittest.TestCase):
                 self.username, self.password)
             self.user_id = user_id
 
+    def register(self):
+        return self.client.post(
+            "/register",
+            data={
+                "username": self.username,
+                "password": self.password
+            },
+            follow_redirects=True)
+
+    def login(self):
+        return self.client.post(
+            "/login",
+            data={
+                "username": self.username,
+                "password": self.password
+            },
+            follow_redirects=True)
+
 
 class TestCtx(AppTest):
     def test_get_db(self):
@@ -83,13 +101,7 @@ class TestAuth(AppTest):
         response = self.client.get("/register")
         self.assertEqual(200, response.status_code)
 
-        response = self.client.post(
-            "/register",
-            data={
-                "username": self.username + '2',
-                "password": self.password
-            },
-            follow_redirects=True)
+        response = self.register()
         self.assertEqual(200, response.status_code)
 
         with self.app.app_context():
@@ -97,7 +109,7 @@ class TestAuth(AppTest):
             self.assertIsNot(
                 None,
                 db.check_username_and_password(
-                    self.username + '2',
+                    self.username,
                     self.password))
 
     def test_login_logout(self):
@@ -125,17 +137,74 @@ class TestAuth(AppTest):
             "Incorrect username or password",
             response.get_data().decode('utf-8'))
 
-        response = self.client.post(
-            "/login",
-            data={
-                "username": self.username,
-                "password": self.password
-            },
-            follow_redirects=True)
-
+        response = self.login()
         self.assertEqual(200, response.status_code)
         self.assertIn("Logged in as", response.get_data().decode('utf-8'))
 
         response = self.client.post("/logout", follow_redirects=True)
         self.assertEqual(200, response.status_code)
         self.assertIn("Logged out", response.get_data().decode('utf-8'))
+
+class TestInventory(AppTest):
+    def login_and_trade(self):
+        self.register()
+        self.login()
+        return self.client.post(
+            "/trade",
+            data={
+                "item": "abc",
+                "bean_id": "1",
+                "qty": "1",
+            },
+            follow_redirects=True)
+
+    def test_trade_and_beans(self):
+        with self.app.app_context():
+            with self.client:
+                response = self.login_and_trade()
+                self.assertEqual(200, response.status_code)
+
+                response = self.client.get("/trade")
+                self.assertEqual(200, response.status_code)
+
+                db = ctx.get_db()
+                user_id = ctx.get_user_id()
+
+                beans = db.list_inventory_from_user_id(user_id)
+                self.assertEqual(1, len(beans))
+                bean_id, qty, bean = beans[0]
+                self.assertEqual(1, bean_id)
+                self.assertEqual(1, qty)
+
+                self.assertTrue(db.already_traded(user_id, "abc"))
+
+    def test_beans(self):
+        self.login_and_trade()
+        with self.app.app_context():
+            with self.client:
+                response = self.client.get("/beans")
+                self.assertEqual(200, response.status_code)
+
+                db = ctx.get_db()
+                user_id = ctx.get_user_id()
+
+                beans = db.list_inventory_from_user_id(user_id)
+                for bean_id, qty, bean in beans:
+                    self.assertIn(
+                        bean.name,
+                        response.get_data().decode('utf-8'))
+
+    def test_history(self):
+        self.login_and_trade()
+        with self.app.app_context():
+            with self.client:
+                response = self.client.get("/history")
+                self.assertEqual(200, response.status_code)
+
+                db = ctx.get_db()
+                user_id = ctx.get_user_id()
+                trades = db.list_trades_from_user_id(user_id)
+                for _, item, _ in trades:
+                    self.assertIn(
+                        item,
+                        response.get_data().decode('utf-8'))
