@@ -9,31 +9,6 @@ SCHEMA_FILE_PATH = os.path.join(os.path.dirname(__file__), "schema.sql")
 BEANS_FILE_PATH = os.path.join(os.path.dirname(__file__), "beans")
 
 
-def _bean_to_tuple(bean):
-    return (bean.name, bean.short_desc, bean.color.value, bean.quality.value)
-
-
-def _tuple_to_bean_or_none(tuple):
-    if tuple is None:
-        return None
-
-    return beans.Bean(
-        tuple[1],
-        tuple[2],
-        beans.Color(tuple[3]),
-        beans.Quality(tuple[4]))
-
-def _user_tuple_to_dict_or_none(tuple):
-    if tuple is None:
-        return None
-
-    return {
-        'user_id': tuple[0],
-        'username': tuple[1],
-        'password': tuple[2]
-    }
-
-
 class Database:
     def initialize_from_schema(
         self,
@@ -48,15 +23,17 @@ class Database:
         beans_file_path=BEANS_FILE_PATH
     ):
         with open(beans_file_path, encoding='utf-8') as beans_file:
+            bean_list = []
             for line in beans_file.readlines():
                 split_line = line.split(';')
                 assert len(split_line) == 4
-                bean = beans.Bean(
+                bean_list.append(beans.Bean(
                     split_line[0],
                     split_line[1],
                     int(split_line[2]),
-                    int(split_line[3]))
-                self.create_bean(bean)
+                    int(split_line[3])))
+
+        self.populate_beans(bean_list)
 
     def __init__(self, database_file_path):
         self.db = sqlite3.connect(
@@ -74,8 +51,6 @@ class Database:
         return False
 
     # - Auth
-    # Look up information about a user from the id or username
-    # Register a new user
 
     # Auth Accessors
     def username_from_user_id(self, user_id):
@@ -108,81 +83,101 @@ class Database:
         self.db.commit()
 
     # - Beans
-    # Look up information about a bean from its id
-    # Create new beans
 
     # Beans Accessors
-    def bean_from_name(self, bean_name):
-        return _tuple_to_bean_or_none(self.db.execute(
-            'SELECT * FROM beans WHERE bean_name = ?', (bean_name,)
-        ).fetchone())
+    def list_beans_from_bean_ids(self, bean_ids):
+        result = []
 
-    def bean_from_bean_id(self, bean_id):
-        return _tuple_to_bean_or_none(self.db.execute(
-            'SELECT * FROM beans WHERE bean_id = ?', (bean_id,)
-        ).fetchone())
+        for bean_id in bean_ids:
+            row = self.db.execute(
+                'SELECT bean_name, short_desc, color, quality'
+                ' FROM beans WHERE bean_id = ?',
+                (bean_id,)
+            ).fetchone()
+            if row is None:
+                result.append(None)
+            else:
+                result.append(beans.Bean(*row))
 
-    def bean_id_from_name(self, bean_name):
-        return _unwrap_single_if_not_none(self.db.execute(
-            'SELECT bean_id FROM beans WHERE bean_name = ?', (bean_name,)
-        ).fetchone())
+        return result
 
-    def list_beans(self):
-        return self.db.execute(
-            'SELECT bean_id, bean_name FROM beans ORDER BY bean_name'
-        ).fetchall()
+    def list_beans(self, start=-1, count=-1):
+        return [
+            (row[0], beans.Bean(row[1], row[2], row[3], row[4]))
+            for row in self.db.execute(
+                'SELECT * FROM beans ORDER BY bean_name LIMIT ? OFFSET ?',
+                (count, start)
+            ).fetchall()
+        ]
 
     # Beans Mutators
-    def create_bean(self, bean):
-        self.db.execute(
+    def populate_beans(self, beans):
+        self.db.executemany(
             'INSERT INTO beans (bean_name, short_desc, color, quality)'
             ' VALUES (?, ?, ?, ?)',
-            _bean_to_tuple(bean))
+            [_bean_to_tuple(bean) for bean in beans])
         self.db.commit()
 
     # - Inventory
-    # Look up a user's inventory from the user id
-    # Page through a user's inventory
-    # Add to a user's inventory
 
     # Inventory Accesors
-    def inventory_from_user_id(self, user_id, start=-1, count=-1):
-        return self.db.execute(
-            'SELECT * FROM inventory WHERE user_id = ? LIMIT ? OFFSET ?',
-            (user_id, count, start)
-        ).fetchall()
+    def list_inventory_from_user_id(self, user_id, start=-1, count=-1):
+        return [
+            (row[0], row[1], beans.Bean(row[2], row[3], row[4], row[5]))
+            for row in self.db.execute(
+                'SELECT'
+                ' inventory.bean_id, qty, bean_name,'
+                ' short_desc, color, quality'
+                ' FROM inventory'
+                ' JOIN beans ON inventory.bean_id = beans.bean_id'
+                ' WHERE user_id = ?'
+                ' ORDER BY bean_name'
+                ' LIMIT ? OFFSET ?',
+                (user_id, count, start)
+            ).fetchall()
+        ]
 
-    def bean_id_qty_for_user_id(self, user_id, bean_id):
-        return _unwrap_single_if_not_none(self.db.execute(
+    # Inventory Mutators
+    def give_user_id_beans(self, user_id, beans):
+        cursor = self.db.cursor()
+        for bean_id, qty in beans:
+            self.__give_user_id_bean(cursor, user_id, bean_id, qty)
+        cursor.close()
+        self.db.commit()
+
+    def __give_user_id_bean(self, cursor, user_id, bean_id, qty):
+        prev_qty = _unwrap_single_if_not_none(cursor.execute(
             'SELECT qty FROM inventory WHERE user_id = ? AND bean_id = ?',
             (user_id, bean_id)
         ).fetchone())
-
-    # Inventory Mutators
-    def init_bean_id_qty_for_user_id(self, user_id, bean_id, qty):
-        self.db.execute(
-            'INSERT INTO inventory (user_id, bean_id, qty) VALUES (?, ?, ?)',
-            (user_id, bean_id, qty))
-        self.db.commit()
-
-    def inc_bean_id_qty_for_user_id(self, user_id, bean_id, inc_qty):
-        qty = self.bean_id_qty_for_user_id(user_id, bean_id)
-        if qty is None:
-            self.init_bean_id_qty_for_user_id(user_id, bean_id, inc_qty)
-            return
-
-        qty += inc_qty
-        self.db.execute(
-            'UPDATE inventory SET qty = ? WHERE user_id = ? AND bean_id = ?',
-            (qty, user_id, bean_id))
-        self.db.commit()
+        if prev_qty is None:
+            cursor.execute(
+                'INSERT INTO inventory (user_id, bean_id, qty)'
+                ' VALUES (?, ?, ?)',
+                (user_id, bean_id, qty))
+        else:
+            cursor.execute(
+                'UPDATE inventory SET qty = ?'
+                ' WHERE user_id = ? AND bean_id = ?',
+                (prev_qty + qty, user_id, bean_id))
 
     # - Trades
-    # Log trades and timestamps
-    # Lookup whether an item has been traded previously by a given user
-    # Page through a user's trades
 
     # Trade Accessors
+    def list_trades_from_user_id(self, user_id, start=-1, count=-1):
+        return [
+            tuple(row)
+            for row in self.db.execute(
+                'SELECT'
+                ' trade_id, item, trade_timestamp'
+                ' FROM trades'
+                ' WHERE user_id = ?'
+                ' ORDER BY trade_timestamp'
+                ' LIMIT ? OFFSET ?',
+                (user_id, count, start)
+            ).fetchall()
+        ]
+
     def already_traded(self, user_id, item):
         traded = self.db.execute(
             'SELECT trade_id FROM trades WHERE user_id = ? AND item = ?',
@@ -190,16 +185,8 @@ class Database:
         ).fetchone()
         return traded is not None
 
-    def trades_from_user_id(self, user_id, start=-1, count=-1):
-        return self.db.execute(
-            'SELECT * FROM trades WHERE user_id = ?'
-            ' ORDER BY trade_timestamp'
-            ' LIMIT ? OFFSET ?',
-            (user_id, count, start)
-        ).fetchall()
-
     # Trade Mutators
-    def log_trade(self, user_id, item):
+    def record_trade(self, user_id, item):
         self.db.execute(
             'INSERT INTO trades (user_id, item) VALUES (?, ?)',
             (user_id, item))
@@ -210,3 +197,7 @@ def _unwrap_single_if_not_none(single):
     if single is not None:
         assert len(single) == 1
         return single[0]
+
+
+def _bean_to_tuple(bean):
+    return (bean.name, bean.short_desc, bean.color.value, bean.quality.value)

@@ -32,7 +32,7 @@ class TestCtx(AppTest):
         with self.app.app_context():
             self.assertIs(ctx.get_db(), ctx.get_db())
             beans = ctx.get_db().list_beans()
-            self.assertEqual('Jelly', beans[0][1])
+            self.assertEqual('Jelly', beans[0][1].name)
 
     def test_teardown_db(self):
         db = None

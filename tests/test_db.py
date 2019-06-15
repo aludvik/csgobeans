@@ -7,9 +7,6 @@ import sqlite3
 from csgobeans.db import Database
 from csgobeans.beans import Bean, Color, Quality
 
-TEST_USER = {"user": "test", "password": "hash"}
-TEST_BEAN = Bean("test", "A testy bean", Color.GREY, Quality.COMMON)
-TEST_ITEM = "testitem"
 
 class TestDatabase(unittest.TestCase):
     def setUp(self):
@@ -43,63 +40,76 @@ class TestDatabase(unittest.TestCase):
             self.db.check_username_and_password("jkl", "mno"))
 
     def test_beans(self):
-        self.db.create_bean(TEST_BEAN)
-        with self.assertRaises(sqlite3.IntegrityError):
-            self.db.create_bean(TEST_BEAN)
-        test_id = self.db.bean_id_from_name(TEST_BEAN.name)
-        test2 = self.db.bean_from_name(TEST_BEAN.name)
-        self.assertEqual(TEST_BEAN, test2)
-        test3 = self.db.bean_from_bean_id(test_id)
-        self.assertEqual(TEST_BEAN, test3)
+        beans = [
+            Bean(*args)
+            for args in sorted([
+                ("a", "a", 1, 1),
+                ("b", "b", 2, 2),
+                ("c", "c", 3, 3),
+                ("d", "d", 4, 4),
+            ])
+        ]
 
-        beans = self.db.list_beans()
-        self.assertEqual(1, len(beans))
-        self.assertEqual((test_id, TEST_BEAN.name), beans[0])
+        self.db.populate_beans(beans)
+
+        bean_ids = []
+        for i, (bean_id, bean) in enumerate(self.db.list_beans()):
+            self.assertEqual(beans[i], bean)
+            bean_ids.append(bean_id)
+
+        for i, (bean_id, bean) in enumerate(
+            self.db.list_beans(start=1, count=2)
+        ):
+            self.assertEqual(beans[i+1], bean)
+
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.db.populate_beans(beans)
+
+        for i, bean in enumerate(self.db.list_beans_from_bean_ids(bean_ids)):
+            self.assertEqual(beans[i], bean)
+
+        bean_ids[1] = 999
+        self.assertEqual(None, self.db.list_beans_from_bean_ids(bean_ids)[1])
 
     def test_inventory(self):
-        self.db.register_user(TEST_USER["user"], TEST_USER["password"])
-        user_id = self.db.check_username_and_password(
-            TEST_USER["user"], TEST_USER["password"])
-        self.db.create_bean(TEST_BEAN)
-        bean_id = self.db.bean_id_from_name(TEST_BEAN.name)
+        self.db.register_user("test", "test")
+        user_id = self.db.check_username_and_password("test", "test")
 
-        self.db.init_bean_id_qty_for_user_id(user_id, bean_id, 3)
-        self.assertEqual(3, self.db.bean_id_qty_for_user_id(user_id, bean_id))
+        beans = [
+            Bean(*args)
+            for args in sorted([
+                ("a", "a", 1, 1),
+                ("b", "b", 2, 2),
+                ("c", "c", 3, 3),
+                ("d", "d", 4, 4),
+            ])
+        ]
+        self.db.populate_beans(beans)
 
-        with self.assertRaises(sqlite3.IntegrityError):
-            self.db.init_bean_id_qty_for_user_id(user_id, bean_id, 5)
-        self.assertEqual(3, self.db.bean_id_qty_for_user_id(user_id, bean_id))
+        bean_ids = [bid for bid, _ in self.db.list_beans(count=2)]
+        self.db.give_user_id_beans(
+            user_id,
+            [(bid, qty+1) for qty, bid in enumerate(bean_ids)])
 
-        self.db.inc_bean_id_qty_for_user_id(user_id, bean_id, 2)
-        self.assertEqual(5, self.db.bean_id_qty_for_user_id(user_id, bean_id))
+        inventory = self.db.list_inventory_from_user_id(user_id)
 
-        navy = Bean("navy", "A sailing bean", Color.WHITE, Quality.UNCOMMON)
-        self.db.create_bean(navy)
-        navy_id = self.db.bean_id_from_name("navy")
-        self.db.init_bean_id_qty_for_user_id(user_id, navy_id, 2000)
-
-    def test_inventory_paging(self):
-        self.db.register_user(TEST_USER["user"], TEST_USER["password"])
-        user_id = self.db.check_username_and_password(
-            TEST_USER["user"], TEST_USER["password"])
-        for i in range(1, 101):
-            bean = Bean(str(i), "bean " + str(i), Color.RED, Quality.RARE)
-            self.db.create_bean(bean)
-        beans = self.db.inventory_from_user_id(user_id, start=10, count=5)
-        for i, bean in enumerate(beans):
-            self.assertEqual(i + start, int(beans[i].name))
+        for i, (bean_id, qty, bean) in enumerate(inventory):
+            self.assertEqual(bean_ids[i], bean_id)
+            self.assertEqual(i + 1, qty)
+            self.assertEqual(beans[i], bean)
 
     def test_trades(self):
-        self.db.register_user(TEST_USER["user"], TEST_USER["password"])
-        self.db.log_trade(TEST_USER["user"], TEST_ITEM)
+        self.db.register_user("test", "test")
+        user_id = self.db.check_username_and_password("test", "test")
+
+        self.db.record_trade(user_id, "item")
         with self.assertRaises(sqlite3.IntegrityError):
-            self.db.log_trade(TEST_USER["user"], TEST_ITEM)
+            self.db.record_trade(user_id, "item")
 
-        trades = self.db.trades_from_user_id(TEST_USER["user"])
+        trades = self.db.list_trades_from_user_id(user_id)
         self.assertEqual(1, len(trades))
-        trade_id, user_id, item, timestamp = trades[0]
-        self.assertEqual(user_id, TEST_USER["user"])
-        self.assertEqual(item, TEST_ITEM)
+        trade_id, item, timestamp = trades[0]
+        self.assertEqual("item", item)
 
-        self.assertTrue(self.db.already_traded(user_id, TEST_ITEM))
-        self.assertFalse(self.db.already_traded(user_id, "notanitem"))
+        self.assertTrue(self.db.already_traded(user_id, "item"))
+        self.assertFalse(self.db.already_traded(user_id, "notitem"))
