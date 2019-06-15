@@ -15,7 +15,8 @@ def create_app(config=None):
 
     @app.route("/")
     def index():
-        return ctx.render_template_with_context("index.html")
+        beans = ctx.get_db().list_beans()
+        return ctx.render_template_with_context("index.html", beans=beans)
 
     app.register_blueprint(auth.create_blueprint())
     app.register_blueprint(inventory.create_blueprint())

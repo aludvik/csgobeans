@@ -2,3 +2,24 @@
 
 {% block title %}CSGO BEANS{% endblock %}
 {% block header %}CSGO BEANS{% endblock %}
+
+{% block content %}
+<table>
+  <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Description</th>
+      <th>Color</th>
+      <th>Quality</th>
+  </tr>
+{% for bean_id, bean in beans %}
+  <tr>
+    <td>{{ bean_id }}</td>
+    <td>{{ bean.name }}</td>
+    <td>{{ bean.short_desc }}</td>
+    <td>{{ bean.color }}</td>
+    <td>{{ bean.quality }}</td>
+  </tr>
+{% endfor %}
+</table>
+{% endblock %}

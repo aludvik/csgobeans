@@ -64,6 +64,20 @@ class TestCtx(AppTest):
             ctx.clear_session()
             self.assertEqual(None, ctx.get_username())
 
+
+class TestRoot(AppTest):
+    def test_index(self):
+        response = self.client.get("/")
+        self.assertEqual(200, response.status_code)
+
+        with self.app.app_context():
+            db = ctx.get_db()
+            beans = db.list_beans()
+            data = response.get_data().decode('utf-8')
+            for bean_id, bean in beans:
+                self.assertIn(bean.name, data)
+
+
 class TestAuth(AppTest):
     def test_register(self):
         response = self.client.get("/register")
