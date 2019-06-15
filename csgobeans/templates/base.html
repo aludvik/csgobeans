@@ -2,14 +2,24 @@
 <title>{% block title %}{% endblock %} - CSGO Beans</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <nav>
-  <h1>CSGO Beans</h1>
+  <h2>CSGO Beans</h2>
   <h2>Login</h2>
   {% if username %}
+    <ul>
+      <li><a href="{{ url_for('index') }}">Home</a></li>
+      <li><a href="{{ url_for('inventory.beans') }}">Beans</a></li>
+      <li><a href="{{ url_for('inventory.trade') }}">Trade</a></li>
+      <li><a href="{{ url_for('inventory.history') }}">History</a></li>
+    </ul>
     <h2>Hello! {{ username }}</h2>
     <form method="post" action="/logout">
       <input type="submit" value="Logout">
     </form>
   {% else %}
+    <ul>
+      <li><a href="{{ url_for('index') }}">Home</a></li>
+      <li><a href="{{ url_for('auth.register') }}">Register</a></li>
+    </ul>
     <form method="post" action="/login">
       <label for="username">Username</label>
       <input name="username" id="username" required>
