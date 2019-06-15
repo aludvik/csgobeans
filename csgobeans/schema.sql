@@ -20,7 +20,7 @@ CREATE TABLE beans (
 CREATE TABLE inventory (
   user_id INTEGER NOT NULL,
   bean_id INTEGER NOT NULL,
-  qty INTEGER,
+  qty INTEGER NOT NULL,
   FOREIGN KEY (user_id) REFERENCES auth (user_id),
   FOREIGN KEY (bean_id) REFERENCES beans (user_id)
   PRIMARY KEY (user_id, bean_id)
