@@ -41,7 +41,7 @@ def validate_login(login_info):
 def create_blueprint():
     bp = flask.Blueprint('auth', __name__)
 
-    @bp.route("/login", methods=["GET", "POST"])
+    @bp.route("/login")
     def login():
         identity = flask.request.args.get('openid.identity', None)
         if identity is None:
