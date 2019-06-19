@@ -82,6 +82,19 @@ class Database:
             (username, password_hash))
         self.db.commit()
 
+    # - Steam
+    def associate_user_id_with_steam_id(self, user_id, steam_id):
+        self.db.execute(
+            'INSERT INTO steam (steam_id, user_id) VALUES (?, ?)',
+            (steam_id, user_id))
+        self.db.commit()
+
+    def steam_id_from_user_id(self, user_id):
+        return _unwrap_single_if_not_none(self.db.execute(
+            'SELECT steam_id FROM steam WHERE user_id = ?',
+            (user_id,)
+        ).fetchone())
+
     # - Beans
 
     # Beans Accessors

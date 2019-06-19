@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -14,35 +15,20 @@ class AppTest(unittest.TestCase):
         })
         self.client = self.app.test_client()
 
-        self.username = "tester"
-        self.password = "password"
+        self.username = "123"
+        self.user_id = None
 
         with self.app.app_context():
             db = ctx.get_db()
             db.initialize_from_schema()
             db.populate_beans_from_file()
-            db.register_user(self.username, self.password)
-            user_id = db.check_username_and_password(
-                self.username, self.password)
-            self.user_id = user_id
-
-    def register(self):
-        return self.client.post(
-            "/register",
-            data={
-                "username": self.username,
-                "password": self.password
-            },
-            follow_redirects=True)
 
     def login(self):
-        return self.client.post(
-            "/login",
-            data={
-                "username": self.username,
-                "password": self.password
-            },
-            follow_redirects=True)
+        with patch('csgobeans.auth.validate_login') as mock:
+            mock.return_value = True
+            return self.client.get(
+                "/login?openid.identity=https://steam/%s" % self.username,
+                follow_redirects=True)
 
 
 class TestCtx(AppTest):
@@ -75,7 +61,7 @@ class TestCtx(AppTest):
 
             self.assertEqual(None, ctx.get_username())
 
-            ctx.set_user_id(self.user_id)
+            self.login()
             self.assertEqual(self.username, ctx.get_username())
             self.assertIs(ctx.get_username(), ctx.get_username())
 
@@ -96,58 +82,8 @@ class TestRoot(AppTest):
                 self.assertIn(bean.name, data)
 
 
-class TestAuth(AppTest):
-    def test_register(self):
-        response = self.client.get("/register")
-        self.assertEqual(200, response.status_code)
-
-        response = self.register()
-        self.assertEqual(200, response.status_code)
-
-        with self.app.app_context():
-            db = ctx.get_db()
-            self.assertIsNot(
-                None,
-                db.check_username_and_password(
-                    self.username,
-                    self.password))
-
-    def test_login_logout(self):
-        response = self.client.post(
-            "/login",
-            data={
-                "username": self.username + 'x',
-                "password": self.password
-            },
-            follow_redirects=True)
-        self.assertEqual(200, response.status_code)
-        self.assertIn(
-            "Incorrect username or password",
-            response.get_data().decode('utf-8'))
-
-        response = self.client.post(
-            "/login",
-            data={
-                "username": self.username,
-                "password": self.password + 'x'
-            },
-            follow_redirects=True)
-        self.assertEqual(200, response.status_code)
-        self.assertIn(
-            "Incorrect username or password",
-            response.get_data().decode('utf-8'))
-
-        response = self.login()
-        self.assertEqual(200, response.status_code)
-        self.assertIn("Logged in as", response.get_data().decode('utf-8'))
-
-        response = self.client.post("/logout", follow_redirects=True)
-        self.assertEqual(200, response.status_code)
-        self.assertIn("Logged out", response.get_data().decode('utf-8'))
-
 class TestInventory(AppTest):
     def login_and_trade(self):
-        self.register()
         self.login()
         return self.client.post(
             "/trade",

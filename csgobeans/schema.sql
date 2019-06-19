@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS auth;
 DROP TABLE IF EXISTS beans;
 DROP TABLE IF EXISTS inventory;
+DROP TABLE IF EXISTS steam;
 DROP TABLE IF EXISTS trades;
 
 CREATE TABLE auth (
@@ -24,6 +25,12 @@ CREATE TABLE inventory (
   FOREIGN KEY (user_id) REFERENCES auth (user_id),
   FOREIGN KEY (bean_id) REFERENCES beans (user_id)
   PRIMARY KEY (user_id, bean_id)
+);
+
+CREATE TABLE steam (
+  steam_id INTEGER PRIMARY KEY,
+  user_id INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES auth (user_id)
 );
 
 CREATE TABLE trades (
