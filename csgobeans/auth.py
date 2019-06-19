@@ -41,7 +41,7 @@ def validate_login(login_info):
 def create_blueprint():
     bp = flask.Blueprint('auth', __name__)
 
-    @bp.route("/login")
+    @bp.route("/login", methods=["GET", "POST"])
     def login():
         identity = flask.request.args.get('openid.identity', None)
         if identity is None:
@@ -69,7 +69,7 @@ def create_blueprint():
 
         return flask.redirect(flask.url_for('index'))
 
-    @bp.route("/logout", methods=['POST'])
+    @bp.route("/logout", methods=['GET', 'POST'])
     @redirect_on_err('index')
     def logout():
         flask.session.clear()

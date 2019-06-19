@@ -18,7 +18,7 @@
   {% else %}
     <ul>
       <li><a href="{{ url_for('index') }}">Home</a></li>
-      <li><a href="{{ url_for('auth.login') }}" action="post"><img src="{{ url_for('static', filename='steamlogin.png')}}"></a></li>
+      <li><a href="{{ url_for('auth.login') }}"><img src="{{ url_for('static', filename='steamlogin.png')}}"></a></li>
     </ul>
   {% endif %}
 </nav>
