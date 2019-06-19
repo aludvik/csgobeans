@@ -85,14 +85,15 @@ class TestRoot(AppTest):
 class TestInventory(AppTest):
     def login_and_trade(self):
         self.login()
-        return self.client.post(
-            "/trade",
-            data={
-                "item": "abc",
-                "bean_id": "1",
-                "qty": "1",
-            },
-            follow_redirects=True)
+        with patch("csgobeans.inventory.load_csgo_inventory") as mock:
+            mock.return_value = ([], False, 0)
+            return self.client.post(
+                "/trade",
+                data={
+                    "item_id": "abc",
+                    "item_name": "def"
+                },
+                follow_redirects=True)
 
     def test_trade_and_beans(self):
         with self.app.app_context():
@@ -100,8 +101,10 @@ class TestInventory(AppTest):
                 response = self.login_and_trade()
                 self.assertEqual(200, response.status_code)
 
-                response = self.client.get("/trade")
-                self.assertEqual(200, response.status_code)
+                with patch("csgobeans.inventory.load_csgo_inventory") as mock:
+                    mock.return_value = ([], False, 0)
+                    response = self.client.get("/trade")
+                    self.assertEqual(200, response.status_code)
 
                 db = ctx.get_db()
                 user_id = ctx.get_user_id()
@@ -109,8 +112,8 @@ class TestInventory(AppTest):
                 beans = db.list_inventory_from_user_id(user_id)
                 self.assertEqual(1, len(beans))
                 bean_id, qty, bean = beans[0]
-                self.assertEqual(1, bean_id)
-                self.assertEqual(1, qty)
+                self.assertTrue(bean_id >= 1)
+                self.assertTrue(qty >= 1 and qty <= 9)
 
                 self.assertTrue(db.already_traded(user_id, "abc"))
 

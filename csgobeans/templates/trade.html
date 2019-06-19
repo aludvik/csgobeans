@@ -4,23 +4,25 @@
 {% block header %}Trade{% endblock %}
 
 {% block content %}
+  {% if too_many %}
+  <p><b>
+    You've sent too many requests to Steam. Please try again after
+    {% if retry_after == -1 %}awhile{% else %}{{ retry_after }} seconds{% endif %}.
+  </b></p>
+  {% elif csgo_inventory|length == 0 %}
+  <p><b>Looks like you don't have anything in your CSGO inventory!</b></p>
+  {% else %}
   <table>
-
-  <form method="post" action="/trade">
-    <table>
-      <tr>
-        <td><label for="item">Item</label></td>
-        <td><input name="item" required></td>
-      </tr>
-      <tr>
-        <td><label for="bean_id">Bean ID</label></td>
-        <td><input name="bean_id" required></td>
-      </tr>
-      <tr>
-        <td><label for="qty">Quantity</label></td>
-        <td><input name="qty" required></td>
-      </tr>
-    </table>
-    <input type="submit" value="Trade">
-  </form>
+    {% for item_id, item_name in csgo_inventory %}
+    <tr>
+      <form method="post" action="/trade">
+        <input type="hidden" name="item_id" value="{{ item_id }}">
+        <input type="hidden" name="item_name" value="{{ item_name }}">
+        <td><label for="item">{{ item_name }}</label></td>
+        <td><input name="item" type="submit" value="Trade"></td>
+      </form>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
 {% endblock %}
