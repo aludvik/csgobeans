@@ -2,27 +2,40 @@
 
 {% block title %}Trade{% endblock %}
 {% block header %}Trade{% endblock %}
+{% block subheader %}Redeem your CSGO skins here to get some magic beans!{% endblock %}
 
 {% block content %}
   {% if too_many %}
-  <p><b>
+  <p>
+    <span class="tag is-warning">
     You've sent too many requests to Steam. Please try again after
     {% if retry_after == -1 %}awhile{% else %}{{ retry_after }} seconds{% endif %}.
-  </b></p>
+    </span>
+  </p>
   {% elif csgo_inventory|length == 0 %}
-  <p><b>Looks like you don't have anything in your CSGO inventory!</b></p>
+  <p>
+    <span class="tag is-info">
+    Looks like you don't have anything in your CSGO inventory!
+    </span>
+  </p>
   {% else %}
-  <table>
     {% for item_id, item_name in csgo_inventory %}
-    <tr>
-      <form method="post" action="/trade">
-        <input type="hidden" name="item_id" value="{{ item_id }}">
-        <input type="hidden" name="item_name" value="{{ item_name }}">
-        <td><label for="item">{{ item_name }}</label></td>
-        <td><input name="item" type="submit" value="Trade"></td>
-      </form>
-    </tr>
+    <form method="post" action="/trade">
+      <input type="hidden" name="item_id" value="{{ item_id }}">
+      <input type="hidden" name="item_name" value="{{ item_name }}">
+      <div class="field is-horizontal">
+        <div class="field-label is-small">
+          <label class="label">{{ item_name }}</label>
+        </div>
+        <div class="field-body">
+          <div class="field">
+            <div class="control">
+              <input class="button" name="item" type="submit" value="Trade">
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
     {% endfor %}
-  </table>
   {% endif %}
 {% endblock %}
