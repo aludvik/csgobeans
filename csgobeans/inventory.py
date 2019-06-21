@@ -5,10 +5,9 @@ import flask
 
 from . import ctx
 from . import db
-from .decorators import get_template_or_post_with_err
 from .decorators import redirect_on_err
 from .decorators import login_required
-from .decorators import FlashError
+from .flash import *
 
 
 CSGO_INVENTORY_URL =\
@@ -100,7 +99,7 @@ def create_blueprint():
             db.give_user_id_beans(user_id, [(bean_id, qty)])
             db.record_trade(user_id, item_id)
 
-            flask.flash(
+            flash_success(
                 "Congratulations! You traded {} for {} {}".format(
                 item_name, qty, bean))
 

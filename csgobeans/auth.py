@@ -6,9 +6,8 @@ import flask
 
 from . import ctx
 from . import db
-from .decorators import get_template_or_post_with_err
 from .decorators import redirect_on_err
-from .decorators import FlashError
+from .flash import *
 
 
 OPENID_NS = "http://specs.openid.net/auth/2.0"
@@ -42,6 +41,7 @@ def create_blueprint():
     bp = flask.Blueprint('auth', __name__)
 
     @bp.route("/login", methods=["GET", "POST"])
+    @redirect_on_err("index")
     def login():
         identity = flask.request.args.get('openid.identity', None)
         if identity is None:
@@ -49,8 +49,7 @@ def create_blueprint():
                 steam_auth_url(flask.request.host, flask.request.base_url))
 
         if not validate_login(flask.request.args):
-            flask.flash("Login failed")
-            return flask.redirect(flask.url_for('index'))
+            raise FlashError("Login failed")
 
         steam_id = identity.split('/')[-1]
 
@@ -64,16 +63,16 @@ def create_blueprint():
         ctx.clear_session()
         ctx.set_user_id(user_id)
 
-        flask.flash("Logged in with Steam ID %s" % steam_id)
+        flash_success("Logged in with Steam ID %s" % steam_id)
         ctx.logger().debug("User logged in '%s'", steam_id)
 
         return flask.redirect(flask.url_for('index'))
 
-    @bp.route("/logout", methods=['POST'])
+    @bp.route("/logout", methods=['GET', 'POST'])
     @redirect_on_err('index')
     def logout():
         flask.session.clear()
-        flask.flash("Logged out")
+        flash_success("Logged out")
         return flask.redirect(flask.url_for('index'))
 
     return bp
